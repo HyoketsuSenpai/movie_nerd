@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:movie_nerd/features/MovieList/domain/entities/movie.dart';
 import 'package:movie_nerd/features/MovieList/presentation/bloc/movielist_bloc.dart';
+import 'package:movie_nerd/features/MovieList/presentation/pages/movie_detail_page.dart';
 
 class MovieListPage extends StatefulWidget {
   const MovieListPage({super.key});
@@ -267,57 +268,61 @@ DropdownButtonHideUnderline(
   }
 
   Widget buildMovie(double deviceHeight, double deviceWidth, Movie movie) {
-    return Container(
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 231, 231, 231),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      height: deviceHeight / 3,
-      width: deviceWidth / 3,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          CachedNetworkImage(
-            imageUrl: 'https://image.tmdb.org/t/p/original${movie.posterPath}',
-            progressIndicatorBuilder: (context, url, downloadProgress) =>
-                CircularProgressIndicator(value: downloadProgress.progress),
-            errorWidget: (context, url, error) => Icon(Icons.error),
-          ),
-          Flexible(
-            child: Text(
-              movie.originalTitle,
-              style: TextStyle(fontWeight: FontWeight.w500),
+    return GestureDetector(
+      onTap: ()=>Navigator.of(context).push(MaterialPageRoute(builder: (context) => MovieDetailPage(movie: movie),)),
+
+      child: Container(
+        clipBehavior: Clip.hardEdge,
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(255, 231, 231, 231),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        height: deviceHeight / 3,
+        width: deviceWidth / 3,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            CachedNetworkImage(
+              imageUrl: 'https://image.tmdb.org/t/p/original${movie.posterPath}',
+              progressIndicatorBuilder: (context, url, downloadProgress) =>
+                  CircularProgressIndicator(value: downloadProgress.progress),
+              errorWidget: (context, url, error) => Icon(Icons.error),
             ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Icon(Icons.thumb_up, size: deviceWidth / 30),
-                  SizedBox(width: 2),
-                  Text(
-                    '${movie.voteCount}',
-                    style: TextStyle(fontSize: deviceWidth / 30),
-                  ),
-                ],
+            Flexible(
+              child: Text(
+                movie.originalTitle,
+                style: TextStyle(fontWeight: FontWeight.w500),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Icon(Icons.star, size: deviceWidth / 30),
-                  SizedBox(width: 2),
-                  Text(
-                    movie.popularity.toStringAsFixed(2),
-                    style: TextStyle(fontSize: deviceWidth / 30),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(Icons.thumb_up, size: deviceWidth / 30),
+                    SizedBox(width: 2),
+                    Text(
+                      '${movie.voteCount}',
+                      style: TextStyle(fontSize: deviceWidth / 30),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(Icons.star, size: deviceWidth / 30),
+                    SizedBox(width: 2),
+                    Text(
+                      movie.popularity.toStringAsFixed(2),
+                      style: TextStyle(fontSize: deviceWidth / 30),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
