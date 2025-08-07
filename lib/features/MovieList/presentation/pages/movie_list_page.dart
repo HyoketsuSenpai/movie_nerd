@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:movie_nerd/features/MovieList/domain/entities/movie.dart';
@@ -15,7 +16,15 @@ class _MovieListPageState extends State<MovieListPage> {
   int page = 1;
   String filter = 'popularity.desc';
 
-  List<String> filters = ['original_title', 'popularity', 'revenue', 'primary_release_date', 'title', 'vote_average', 'vote_count'];
+  List<String> filters = [
+    'original_title',
+    'popularity',
+    'revenue',
+    'primary_release_date',
+    'title',
+    'vote_average',
+    'vote_count',
+  ];
   final _formKey = GlobalKey<FormState>();
 
   final ScrollController _scrollController = ScrollController();
@@ -32,10 +41,12 @@ class _MovieListPageState extends State<MovieListPage> {
           !_scrollController.position.outOfRange) {
         page += 1;
         context.read<MovielistBloc>().add(
-          _searchController.text == ''?
-          GetMovieListEvent(page: page, sortBy: filter):
-          GetSearchMovieListEvent(page: page, query: _searchController.text)
-          ,
+          _searchController.text == ''
+              ? GetMovieListEvent(page: page, sortBy: filter)
+              : GetSearchMovieListEvent(
+                  page: page,
+                  query: _searchController.text,
+                ),
         );
       }
     });
@@ -60,18 +71,22 @@ class _MovieListPageState extends State<MovieListPage> {
               child: SearchBar(
                 onSubmitted: (value) {
                   page = 1;
-                  if(value != '') {
-                  context.read<MovielistBloc>().add(GetSearchMovieListEvent(page: page, query: value,clean: true));
-                  }
-                  else {
-                  context.read<MovielistBloc>().add(
+                  if (value != '') {
+                    context.read<MovielistBloc>().add(
+                      GetSearchMovieListEvent(
+                        page: page,
+                        query: value,
+                        clean: true,
+                      ),
+                    );
+                  } else {
+                    context.read<MovielistBloc>().add(
                       GetMovieListEvent(
                         page: page,
                         sortBy: filter,
                         clean: true,
                       ),
                     );
-
                   }
                 },
                 controller: _searchController,
@@ -81,12 +96,123 @@ class _MovieListPageState extends State<MovieListPage> {
                 leading: const Icon(Icons.search),
               ),
             ),
-            ElevatedButton.icon(icon: Icon(Icons.filter_alt),onPressed: (){
-              showDialog(context: context, builder: (context) {
-                
-              },);
-            }, label: Text(filter)
+            ElevatedButton.icon(
+              icon: Icon(Icons.filter_alt),
+              label: Text(filter.split('.')[0].split('_').join(' ')),
+              onPressed: () {
+                final outerContext = context;
+
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    String selectedFilter = filter;
+                    return AlertDialog(
+                      title: Text('Select Filter'),
+                      content: StatefulBuilder(
+                        builder: (context, setState) {
+                          return Column(
+                            children: [
+                              DropdownButtonHideUnderline(
+                                child: DropdownButton2<String>(
+                                  isExpanded: true,
+                                  value: selectedFilter
+                                      .split('.')[0]
+                                      .split('_')
+                                      .join(' '),
+                                  items: filters
+                                      .map(
+                                        (String item) => DropdownMenuItem<String>(
+                                          value: item
+                                              .split('.')[0]
+                                              .split('_')
+                                              .join(' '),
+                                          child: Text(
+                                            item.split('.')[0].split('_').join(' '),
+                                            style: const TextStyle(fontSize: 14),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setState(() {
+                                        selectedFilter = '${value.split(' ').join('_')}.desc';
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                            
+DropdownButtonHideUnderline(
+                                child: DropdownButton2<String>(
+                                  isExpanded: true,
+                                  value: selectedFilter
+                                      .split('.')[1],
+                                  items: ['asc', 'desc']
+                                      .map(
+                                        (String item) =>
+                                            DropdownMenuItem<String>(
+                                              value: item
+                                                  ,
+                                              child: Text(
+                                                item
+                                                   ,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
+                                      )
+                                      .toList(),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setState(() {
+                                        selectedFilter =
+                                            '${selectedFilter.split('.')[0]}.$value';
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                            
+                            ],
+                          );
+                        },
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+
+                            page = 1;
+                            setState(() {
+                              filter = selectedFilter;
+                            });
+
+                            (outerContext as Element).markNeedsBuild();
+                            outerContext.read<MovielistBloc>().add(
+                              GetMovieListEvent(
+                                page: page,
+                                sortBy: selectedFilter,
+                                clean: true,
+                              ),
+                            );
+                          },
+                          child: Text('Apply'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
+
             Expanded(
               child: BlocBuilder<MovielistBloc, MovielistState>(
                 builder: (context, state) {
@@ -95,13 +221,13 @@ class _MovieListPageState extends State<MovieListPage> {
                   if (state is Loading && state.oldMovies.isEmpty) {
                     return const Center(child: CircularProgressIndicator());
                   }
-              
+
                   if (state is Loaded ||
                       (state is Loading && state.oldMovies.isNotEmpty)) {
                     final movies = state is Loaded
                         ? state.movies
                         : (state as Loading).oldMovies;
-              
+
                     return GridView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.all(8),
@@ -125,11 +251,11 @@ class _MovieListPageState extends State<MovieListPage> {
                       },
                     );
                   }
-              
+
                   if (state is Error) {
                     return Center(child: Text(state.message));
                   }
-              
+
                   return const SizedBox.shrink();
                 },
               ),
@@ -196,5 +322,3 @@ class _MovieListPageState extends State<MovieListPage> {
     );
   }
 }
-
-
