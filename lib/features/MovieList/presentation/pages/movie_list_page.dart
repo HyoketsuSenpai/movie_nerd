@@ -52,7 +52,7 @@ class _MovieListPageState extends State<MovieListPage> {
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) => Scaffold(
-        appBar: AppBar(title: Text('Movie Nerd')),
+        appBar: AppBar(title: const Text('Movie Nerd')),
         body: Column(
           children: [
             Padding(
